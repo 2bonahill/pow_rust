@@ -21,8 +21,7 @@ pub fn generate_pow(hash: &InHash, difficulty: u64) -> String {
     loop {
         compute_hash(&mut h, &data);
         if greater(&h, &target) {
-            //return hex::encode(data_to_nonce(&data));
-            return "test".into();
+            return hex::encode(data_to_nonce(&data));
         }
         if !next_data(&mut data, entropy.len()) {
             let new_entropy = get_random_seed();
