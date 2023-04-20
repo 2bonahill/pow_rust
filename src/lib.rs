@@ -133,12 +133,14 @@ fn data_to_nonce(data: &Data) -> Hash {
 #[cfg(test)]
 mod tests {
 
+    use std::time::Instant;
+
     use super::*;
 
     #[test]
     fn test_hash_workflow() {
         // generate some random hash in data and set up the scene
-        let in_hash: InHash = get_random_hash_in();
+        let in_hash: InHash = [0; IN_SIZE].map(|_| -> u8 { rand::thread_rng().gen() });
         let _target = get_target(3);
         let entropy = get_random_seed();
 
@@ -175,11 +177,20 @@ mod tests {
         ));
     }
 
-    fn get_random_hash_in() -> InHash {
-        let mut d: InHash = [0; IN_SIZE];
-        for i in 0..IN_SIZE {
-            d[i] = rand::thread_rng().gen();
+    #[test]
+    fn test_generate_pow() {
+        let in_hash: InHash = [0; IN_SIZE].map(|_| -> u8 { rand::thread_rng().gen() });
+
+        for i in 0..10 {
+            let start = Instant::now();
+            let x = generate_pow(&in_hash, 1 << i);
+            let duration = start.elapsed();
+            println!(
+                "Round number: {} - {} // Time: {}ns",
+                i,
+                &x,
+                duration.as_nanos()
+            );
         }
-        d
     }
 }
