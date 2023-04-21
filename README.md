@@ -3,21 +3,19 @@ Rust implementation of a basic Proof of Work (PoW) algorithm.
 
 ## Usage
 ```rust
-function test() {
-    // Generate some random input data
-    let in_hash: InHash = [0; IN_SIZE].map(|_| -> u8 { rand::thread_rng().gen() });
+// Generate some random input data
+let in_hash: InHash = [0; IN_SIZE].map(|_| -> u8 { rand::thread_rng().gen() });
 
-    for i in 0..10 {
-        let start = Instant::now();
-        let x = generate_pow(&in_hash, 1 << i);
-        let duration = start.elapsed();
-        println!(
-            "Round number: {} - {} // Time: {}ns",
-            i,
-            &x,
-            duration.as_nanos()
-        );
-    }
+for i in 0..10 {
+    let start = Instant::now();
+    let x = generate_pow(&in_hash, 1 << i);
+    let duration = start.elapsed();
+    println!(
+        "Round number: {} - {} // Time: {}ns",
+        i,
+        &x,
+        duration.as_nanos()
+    );
 }
 ```
 
