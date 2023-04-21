@@ -60,7 +60,7 @@ fn get_target(difficulty: u64) -> Hash {
     target.to_le_bytes()[0..8].try_into().unwrap()
 }
 
-// ok
+// modify the nonce by incrementing it's bytes
 fn next_data(data: &mut Data, max_size: usize) -> bool {
     for i in 0..max_size {
         data[i] = data[i].wrapping_add(1);
