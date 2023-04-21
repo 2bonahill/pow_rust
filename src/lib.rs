@@ -1,7 +1,6 @@
-// A basic PoW implementation
-#![allow(dead_code)] // TODO: remove
+// A rust based implementation of a basic PoW algorithm
+
 extern crate rand;
-use byteorder::{LittleEndian, WriteBytesExt};
 use rand::Rng;
 use sha3::{Digest, Sha3_256};
 
@@ -31,45 +30,34 @@ pub fn generate_pow(hash: &InHash, difficulty: u64) -> String {
     }
 }
 
-// pub fn benchmark_pow(difficulty: u64) -> String {
-//     let target = get_target(difficulty);
-//     let mut data = vec![0u8; OUT_SIZE];
-//     let mut h = [0u8; OUT_SIZE];
-//     loop {
-//         hash_func(&mut h, &data);
-//         if greater(&h, &target) {
-//             return hex::encode(data_to_nonce(&data));
-//         }
-//         if !next_data(&mut data.to_vec(), OUT_SIZE) {
-//             data = vec![0u8; OUT_SIZE];
-//         }
-//     }
-// }
+pub fn benchmark_pow(difficulty: u64) -> String {
+    let target = get_target(difficulty);
+    let mut data = [0u8; DATA_SIZE];
+    let mut h = [0u8; OUT_SIZE];
+    loop {
+        compute_hash(&mut h, &data);
+        if greater(&h, &target) {
+            return hex::encode(data_to_nonce(&data));
+        }
+        if !next_data(&mut data, OUT_SIZE) {
+            data = [0u8; DATA_SIZE];
+        }
+    }
+}
 
-// ok
-fn compute_hash(hash: &mut [u8], data: &Data) {
+fn compute_hash(hash: &mut Hash, data: &Data) {
     let mut sha3 = Sha3_256::new();
     sha3.update(data);
     let digest = sha3.finalize();
     hash.copy_from_slice(&digest[0..8]);
 }
 
-// ok
-pub fn get_target(difficulty: u64) -> Hash {
+fn get_target(difficulty: u64) -> Hash {
     let big: u128 = 1 << 64;
     let target: u128 = big - (big / difficulty as u128);
 
-    // make x little endian
-    let mut lev: Vec<u8> = Vec::new();
-    lev.write_u128::<LittleEndian>(target).unwrap();
-    lev.resize(8, 0);
-    let h: Hash = lev.try_into().unwrap_or_else(|v: Vec<u8>| {
-        panic!(
-            "Failed converting into [u8; 8]. Vec was of length {}",
-            v.len()
-        )
-    });
-    h
+    // make little endian
+    target.to_le_bytes()[0..8].try_into().unwrap()
 }
 
 // ok
@@ -83,7 +71,7 @@ fn next_data(data: &mut Data, max_size: usize) -> bool {
     false
 }
 
-// ok
+// Compare two hashes (little endian setup)
 fn greater(a: &Hash, b: &Hash) -> bool {
     for i in (0..OUT_SIZE).rev() {
         if a[i] == b[i] {
@@ -94,7 +82,7 @@ fn greater(a: &Hash, b: &Hash) -> bool {
     true
 }
 
-// ok
+// Return 8 bytes of entropy to be used the initial nonce
 pub fn get_random_seed() -> Hash {
     let mut h: Hash = [0u8; OUT_SIZE];
     for i in 0..OUT_SIZE {
@@ -103,7 +91,8 @@ pub fn get_random_seed() -> Hash {
     h
 }
 
-// ok
+// Constructs the final data which will be hashed. It will be concatenation of
+// the entropy and the input hash (data = entropy || InHash)
 fn get_data(entropy: &Hash, hash: &InHash) -> Data {
     let mut data = vec![0u8; DATA_SIZE];
 
@@ -123,7 +112,7 @@ fn get_data(entropy: &Hash, hash: &InHash) -> Data {
     })
 }
 
-// ok
+// Extract the first 8 bytes from the data, which represent the nonce
 fn data_to_nonce(data: &Data) -> Hash {
     let mut nonce: Hash = [0u8; 8];
     nonce.copy_from_slice(&data[0..8]);
@@ -136,6 +125,30 @@ mod tests {
     use std::time::Instant;
 
     use super::*;
+
+    #[test]
+    fn test_generate_pow() {
+        let in_hash: InHash = [0; IN_SIZE].map(|_| -> u8 { rand::thread_rng().gen() });
+
+        for i in 0..10 {
+            let start = Instant::now();
+            let x = generate_pow(&in_hash, 1 << i);
+            let duration = start.elapsed();
+            println!(
+                "Round number: {} - {} // Time: {}ns",
+                i,
+                &x,
+                duration.as_nanos()
+            );
+        }
+    }
+
+    #[test]
+    fn test_get_target() {
+        let x: u64 = 12345678;
+        let t = get_target(x);
+        assert_eq!(t.len(), OUT_SIZE);
+    }
 
     #[test]
     fn test_hash_workflow() {
@@ -151,7 +164,6 @@ mod tests {
         // compute the  hash
         let mut hash: Hash = [0; OUT_SIZE];
         compute_hash(&mut hash, &data);
-        dbg!(&hash);
 
         // the nonce will be the return value
         let _nonce = data_to_nonce(&data);
@@ -175,22 +187,5 @@ mod tests {
             &[0, 0, 0, 0, 0, 0, 0, 2],
             &[9, 0, 0, 0, 0, 0, 0, 1]
         ));
-    }
-
-    #[test]
-    fn test_generate_pow() {
-        let in_hash: InHash = [0; IN_SIZE].map(|_| -> u8 { rand::thread_rng().gen() });
-
-        for i in 0..10 {
-            let start = Instant::now();
-            let x = generate_pow(&in_hash, 1 << i);
-            let duration = start.elapsed();
-            println!(
-                "Round number: {} - {} // Time: {}ns",
-                i,
-                &x,
-                duration.as_nanos()
-            );
-        }
     }
 }
