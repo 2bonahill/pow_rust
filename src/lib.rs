@@ -12,6 +12,9 @@ type Hash = [u8; OUT_SIZE];
 type InHash = [u8; IN_SIZE];
 type Data = [u8; DATA_SIZE];
 
+/// This function accepts an input hash and a difficulty level and
+/// returns a nonce that, when combined with the input hash and hashed,
+/// meets the desired difficulty level.
 pub fn generate_pow(hash: &InHash, difficulty: u64) -> String {
     let target = get_target(difficulty);
     let entropy = get_random_seed();

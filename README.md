@@ -1,5 +1,13 @@
-# PoW Rust
-Rust implementation of a basic Proof of Work (PoW) algorithm.
+# Rust PoW Algorithm
+A Rust-based implementation of a basic Proof of Work (PoW) algorithm.
+
+## Overview
+This PoW algorithm generates a cryptographic hash function using the SHA3-256 algorithm. The goal of the algorithm is to find a nonce (a random number) that, when hashed with the input data, produces a hash that meets a given target. This target is derived from a difficulty level, with higher difficulty levels requiring more computational work.
+
+## Dependencies
+
+- **rand**: Used for generating random numbers.
+- **sha3**: Provides the SHA3-256 cryptographic hash function.
 
 ## Usage
 ```rust
